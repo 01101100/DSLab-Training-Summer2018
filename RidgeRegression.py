@@ -1,14 +1,16 @@
 import numpy as np
 
+
 class RidgeRegression:
     def __init__(self):
         return
-    
+
     def fit(self, X_train, Y_train, LAMBDA):
         assert len(X_train.shape) == 2 and X_train.shape[0] == Y_train.shape[0]
+        # Y_train = np.reshape(Y_train, (-1, 1))
         W = np.linalg.inv(
-            X_train.transpose().dot(X_train) + LAMBDA * np.identity(X_train[1])
-        ).dot(X_train.transpose()).dot(Y_train) # FIXME:X transpose or not
+            X_train.transpose().dot(X_train) + LAMBDA * np.identity(X_train.shape[1])
+        ).dot(X_train.transpose()).dot(Y_train)  # FIXME:X transpose or not
         return W
 
     def predict(self, W, X_new):
@@ -28,13 +30,16 @@ class RidgeRegression:
             train_ids = [[k for k in row_ids if k not in valid_ids[i]] for i in range(num_folds)]
             aver_RSS = 0
             for i in range(num_folds):
+                # debug_id = valid_ids[i]
+                # debug = X_train[debug_id]
+                # debug_y = Y_train[debug_id]
                 valid_part = {'X': X_train[valid_ids[i]], 'Y': Y_train[valid_ids[i]]}
                 train_part = {'X': X_train[train_ids[i]], 'Y': Y_train[train_ids[i]]}
                 W = self.fit(train_part['X'], train_part['Y'], LAMBDA)
                 Y_predicted = self.predict(W, valid_part['X'])
                 aver_RSS += self.compute_RSS(valid_part['Y'], Y_predicted)
             return aver_RSS / num_folds
-        
+
         def range_scan(best_LAMBDA, minimum_RSS, LAMBDA_values):
             for current_LAMBDA in LAMBDA_values:
                 aver_RSS = cross_validation(num_folds=5, LAMBDA=current_LAMBDA)
@@ -49,6 +54,7 @@ class RidgeRegression:
             max(0, (best_LAMBDA - 1) * 1000), (best_LAMBDA + 1) * 1000, 1
         )]
 
-        best_LAMBDA, minimum_RSS = range_scan(best_LAMBDA=best_LAMBDA, minimum_RSS=minimum_RSS, LAMBDA_values=LAMBDA_values)
+        best_LAMBDA, minimum_RSS = range_scan(best_LAMBDA=best_LAMBDA, minimum_RSS=minimum_RSS,
+                                              LAMBDA_values=LAMBDA_values)
 
         return best_LAMBDA
